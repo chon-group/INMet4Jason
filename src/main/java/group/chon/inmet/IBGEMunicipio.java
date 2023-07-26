@@ -9,4 +9,8 @@ public class IBGEMunicipio {
     public String toString(){
         return this.ibgeCode.toString();
     }
+
+    public Integer getIbgeCode() {
+        return ibgeCode;
+    }
 }

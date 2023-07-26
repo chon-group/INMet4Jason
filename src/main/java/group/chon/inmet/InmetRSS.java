@@ -63,7 +63,7 @@ public class InmetRSS {
 
     }
 
-    public void downloadRSS(String url, String outputFilePath) throws IOException {
+    private void downloadRSS(String url, String outputFilePath) throws IOException {
         Path diretorioPath = Paths.get(".rss");
         outputFilePath = ".rss/"+outputFilePath;
         if (!(Files.exists(diretorioPath) && Files.isDirectory(diretorioPath))) {
@@ -93,7 +93,7 @@ public class InmetRSS {
         }
     }
 
-    public void lerXML(String xmlFilePath) {
+    private void lerXML(String xmlFilePath) {
         xmlFilePath = ".rss/"+xmlFilePath;
         try {
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
@@ -175,7 +175,7 @@ public class InmetRSS {
         }
     }
 
-    public Boolean valendo(Long timeStampDateOnSet, Long timeStampDateExpires) {
+    public Boolean isRightNow(Long timeStampDateOnSet, Long timeStampDateExpires) {
         long currentTimestamp = Instant.now().getEpochSecond();
         if(timeStampDateExpires>currentTimestamp){
             if(timeStampDateOnSet<currentTimestamp){
@@ -184,4 +184,15 @@ public class InmetRSS {
         }
         return false;
     }
+
+    public Boolean isFuture(Long timeStampDateOnSet, Long timeStampDateExpires) {
+        long currentTimestamp = Instant.now().getEpochSecond();
+        if(timeStampDateExpires>currentTimestamp){
+            if(timeStampDateOnSet>currentTimestamp){
+                return true;
+            }
+        }
+        return false;
+    }
+
 }
