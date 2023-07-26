@@ -19,7 +19,6 @@ public class InmetArrayAlerts {
         if (!alertExists(alert.getId())) {
             alertArray.add(alert);
             setHasNewItem(true);
-            System.out.println("["+alert.getId()+"] New Inmet Alert!");
             return true;
         }else{
             System.out.print(".");

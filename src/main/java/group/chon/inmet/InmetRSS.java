@@ -25,17 +25,21 @@ import java.time.Instant;
 
 public class InmetRSS {
     private InmetArrayAlerts inmetArrayAlerts = new InmetArrayAlerts();
-    private String outputFilePath = "inmetRSS.xml";
+    //private String outputFilePath = "inmetRSS.xml";
     private String url;
     public InmetRSS(String rssURL){
         this.url = rssURL;
         this.read();
     }
 
+    public InmetRSS(){
+
+    }
+
     private void read(){
         try {
-            this.downloadRSS(url, outputFilePath);
-            this.lerXML(outputFilePath);
+            this.downloadRSS(url, "inmetRSS.xml");
+            this.lerXML("inmetRSS.xml");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -65,12 +69,12 @@ public class InmetRSS {
 
     private void downloadRSS(String url, String outputFilePath) throws IOException {
         Path diretorioPath = Paths.get(".rss");
-        outputFilePath = ".rss/"+outputFilePath;
+        //outputFilePath = ".rss/"+outputFilePath;
         if (!(Files.exists(diretorioPath) && Files.isDirectory(diretorioPath))) {
             Files.createDirectory(diretorioPath);
         }
 
-        if(!(Files.exists(Path.of(outputFilePath)))) {
+        if(isFileMoreOldOrNotExists(".rss/"+outputFilePath,5)) {
             System.out.println("[Inmet] Downloading... "+outputFilePath);
             CloseableHttpClient httpClient = HttpClients.createDefault();
             HttpGet httpGet = new HttpGet(url);
@@ -79,7 +83,7 @@ public class InmetRSS {
                 HttpEntity entity = response.getEntity();
                 if (entity != null) {
                     try (InputStream inputStream = entity.getContent();
-                         OutputStream outputStream = new FileOutputStream(outputFilePath)) {
+                         OutputStream outputStream = new FileOutputStream(".rss/"+outputFilePath)) {
                         byte[] buffer = new byte[1024];
                         int bytesRead;
                         while ((bytesRead = inputStream.read(buffer)) != -1) {
@@ -195,4 +199,38 @@ public class InmetRSS {
         return false;
     }
 
+   private Boolean isFileMoreOldOrNotExists(String filePath, Integer oldInMinutes) {
+    File file = new File(filePath);
+    if (file.exists()) {
+        long ultimaModificacao = file.lastModified();
+        long tempoAtual = System.currentTimeMillis();
+
+        long diferencaEmMilissegundos = tempoAtual - ultimaModificacao;
+        long cincoMinutosEmMilissegundos = oldInMinutes * 60 * 1000; // 5 minutos em milissegundos
+
+        if (diferencaEmMilissegundos > cincoMinutosEmMilissegundos) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+    return true;
+    }
+
+    public void cleanCache(String strOpt){
+        File diretorio = new File(strOpt);
+        apagarDiretorioRecursivamente(diretorio);
+    }
+
+    private void apagarDiretorioRecursivamente(File diretorio) {
+        if (diretorio.isDirectory()) {
+            File[] conteudo = diretorio.listFiles();
+            if (conteudo != null) {
+                for (File arquivo : conteudo) {
+                    apagarDiretorioRecursivamente(arquivo);
+                }
+            }
+        }
+        diretorio.delete();
+    }
 }

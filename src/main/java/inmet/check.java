@@ -4,6 +4,7 @@ import group.chon.inmet.IBGEMunicipio;
 import group.chon.inmet.InmetAlert;
 import group.chon.inmet.InmetRSS;
 import jason.asSemantics.DefaultInternalAction;
+import jason.asSemantics.Message;
 import jason.asSemantics.TransitionSystem;
 import jason.asSemantics.Unifier;
 import jason.asSyntax.Literal;
@@ -32,7 +33,15 @@ public class check extends DefaultInternalAction {
                         ",\"" + inmetAlert.getInstruction()+"\"" +
                         ",\"" + inmetAlert.getWeb()+"\""+
                         ")";
-                ts.getAg().getBB().add(Literal.parseLiteral(strBelief));
+
+                //ts.getAg().getBB().add(Literal.parseLiteral(strBelief));
+
+                Message m = new Message("tell",
+                        "inmetGovBR",
+                        ts.getAgArch().getAgName(),
+                        Literal.parseLiteral(strBelief));
+                ts.getAgArch().sendMsg(m);
+
             }
         }
         return true;

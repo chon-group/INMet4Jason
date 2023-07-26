@@ -1,0 +1,18 @@
+/*
+    helloINMet
+    ---------------------------
+
+    Jason Application File
+
+    This file defines the initial state of the MAS
+
+    Jason 3.3.0-SNAPSHOT
+    julho 26, 2023 - 15:38:12
+*/
+
+MAS helloINMet {
+
+    agents: inmetAgent; 
+
+    aslSourcePath: "src/agt";
+}
