@@ -1,4 +1,4 @@
-package org.example;
+package group.chon.inmet;
 
 public class IBGEMunicipio {
     Integer ibgeCode;

@@ -1,29 +1,39 @@
-package org.example;
+package group.chon.inmet;
 
 import java.util.ArrayList;
 
 public class InmetAlert {
-    Integer id;
-    String title;
-    String link;
-    String category;
-    String event;
-    String responseType;
-    String urgency;
-    String severity;
-    String certainty;
-    String senderName;
-    String description;
-    String instruction;
-    String web;
-    String colorRisk;
-    Long timeStampDateOnSet;
-    Long timeStampDateExpires;
-    ArrayList<IBGEMunicipio> ibgeMunicipios = new ArrayList<>();
+    private Boolean perceived;
+    private Integer id;
+    private String title;
+    private String link;
+    private String category;
+    private String event;
+    private String responseType;
+    private String urgency;
+    private String severity;
+    private String certainty;
+    private String senderName;
+    private String description;
+    private String instruction;
+    private String web;
+    private String colorRisk;
+    private Long timeStampDateOnSet;
+    private Long timeStampDateExpires;
+    private ArrayList<IBGEMunicipio> ibgeMunicipios = new ArrayList<>();
     public InmetAlert(Integer id, String title, String link) {
+        this.perceived = false;
         this.id = id;
         this.title = title;
         this.link = link;
+    }
+
+    public Boolean getPerceived() {
+        return perceived;
+    }
+
+    public void setPerceived(Boolean perceived) {
+        this.perceived = perceived;
     }
 
     public Integer getId() {

@@ -15,24 +15,10 @@
     </properties>
 
     <dependencies>
-        <!-- Rome - Feed Library -->
-        <dependency>
-            <groupId>com.rometools</groupId>
-            <artifactId>rome</artifactId>
-            <version>1.16.0</version>
-        </dependency>
-
-        <!-- Rome - Fetcher Library -->
-        <dependency>
-            <groupId>com.rometools</groupId>
-            <artifactId>rome-fetcher</artifactId>
-            <version>1.16.0</version>
-        </dependency>
-
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
-            <version>4.5.13</version>
+            <version>4.5.14</version>
         </dependency>
 
     </dependencies>

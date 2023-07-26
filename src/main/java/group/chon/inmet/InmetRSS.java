@@ -1,4 +1,4 @@
-package org.example;
+package group.chon.inmet;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -15,65 +15,86 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.util.Date;
-public class Main {
-    static InmetArrayAlerts inmetArrayAlerts = new InmetArrayAlerts();
-    public static void main(String[] args) {
-        String url = "https://apiprevmet3.inmet.gov.br/avisos/rss";
-        String outputFilePath = "arquivo.xml";
 
+public class InmetRSS {
+    private InmetArrayAlerts inmetArrayAlerts = new InmetArrayAlerts();
+    private String outputFilePath = "inmetRSS.xml";
+    private String url;
+    public InmetRSS(String rssURL){
+        this.url = rssURL;
+        this.read();
+    }
+
+    private void read(){
         try {
-            downloadRSS(url, outputFilePath);
-            lerXML(outputFilePath);
+            this.downloadRSS(url, outputFilePath);
+            this.lerXML(outputFilePath);
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
 
-        if(inmetArrayAlerts.hasNewItem){
-            InmetAlert alerta = inmetArrayAlerts.getLastAlert();
+    public Boolean getHasNewItem(){
+        return inmetArrayAlerts.getHasNewItem();
+    }
 
-            System.out.println(alerta.getId());
-            System.out.println(alerta.getCategory());
-            System.out.println(alerta.getDescription());
+    public InmetAlert getLastUnperceivedAlert(){
+        return inmetArrayAlerts.getLastUnperceivedAlert();
+    }
 
-            for (int x=0; x<alerta.getIbgeMunicipios().size(); x++){
-                System.out.print("\t"+(String) alerta.getIbgeMunicipios().get(x).toString());
-            }
-            System.out.println("");
-
-            valendo(alerta.getTimeStampDateOnSet(),alerta.getTimeStampDateExpires());
-
+    public Integer getAlertID(){
+        return 0;
+    }
+    public static void main(String[] args) {
+        InmetRSS inmetRSS = new InmetRSS("https://apiprevmet3.inmet.gov.br/avisos/rss");
+        InmetAlert inmetAlert = null;
+        while(inmetRSS.getHasNewItem()){
+            inmetAlert = inmetRSS.getLastUnperceivedAlert();
+            System.out.print(inmetAlert.getId()+" ");
+            System.out.println(inmetAlert.getDescription());
         }
 
     }
 
-    public static void downloadRSS(String url, String outputFilePath) throws IOException {
-        CloseableHttpClient httpClient = HttpClients.createDefault();
-        HttpGet httpGet = new HttpGet(url);
+    public void downloadRSS(String url, String outputFilePath) throws IOException {
+        Path diretorioPath = Paths.get(".rss");
+        outputFilePath = ".rss/"+outputFilePath;
+        if (!(Files.exists(diretorioPath) && Files.isDirectory(diretorioPath))) {
+            Files.createDirectory(diretorioPath);
+        }
 
-        try (CloseableHttpResponse response = httpClient.execute(httpGet)) {
-            HttpEntity entity = response.getEntity();
-            if (entity != null) {
-                try (InputStream inputStream = entity.getContent();
-                     OutputStream outputStream = new FileOutputStream(outputFilePath)) {
-                    byte[] buffer = new byte[1024];
-                    int bytesRead;
-                    while ((bytesRead = inputStream.read(buffer)) != -1) {
-                        outputStream.write(buffer, 0, bytesRead);
+        if(!(Files.exists(Path.of(outputFilePath)))) {
+            System.out.println("[Inmet] Downloading... "+outputFilePath);
+            CloseableHttpClient httpClient = HttpClients.createDefault();
+            HttpGet httpGet = new HttpGet(url);
+
+            try (CloseableHttpResponse response = httpClient.execute(httpGet)) {
+                HttpEntity entity = response.getEntity();
+                if (entity != null) {
+                    try (InputStream inputStream = entity.getContent();
+                         OutputStream outputStream = new FileOutputStream(outputFilePath)) {
+                        byte[] buffer = new byte[1024];
+                        int bytesRead;
+                        while ((bytesRead = inputStream.read(buffer)) != -1) {
+                            outputStream.write(buffer, 0, bytesRead);
+                        }
                     }
                 }
+            } catch (Exception ex) {
+                ex.printStackTrace();
             }
         }
     }
 
-    public static void lerXML(String xmlFilePath) {
-        //String xmlFilePath = "arquivo.xml";
+    public void lerXML(String xmlFilePath) {
+        xmlFilePath = ".rss/"+xmlFilePath;
         try {
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
             DocumentBuilder builder = factory.newDocumentBuilder();
@@ -95,16 +116,16 @@ public class Main {
                             item.getElementsByTagName("title").item(0).getTextContent(),
                             link);
 
+                    String alertPathFile = ".rss/"+alertID+".xml";
+
                     //Baixando informações do Alerta
-                    File file = new File(alertID.toString()+".xml");
-                    if (file.exists()) {
-                        System.out.println("O arquivo já existe. Não será feito o download novamente.");
-                    } else {
-                        downloadRSS(link,alertID.toString()+".xml");
+                    File file = new File(alertPathFile);
+                    if (!file.exists()) {
+                        downloadRSS(link,alertID+".xml");
                     }
                     DocumentBuilderFactory alertFactory = DocumentBuilderFactory.newInstance();
                     DocumentBuilder alertBuilder = alertFactory.newDocumentBuilder();
-                    Document alertDoc = alertBuilder.parse(new File(alertID.toString()+".xml"));
+                    Document alertDoc = alertBuilder.parse(new File(alertPathFile));
                     Element info = (Element) alertDoc.getElementsByTagName("info").item(0);
 
                     alert.setCategory(info.getElementsByTagName("category").item(0).getTextContent());
@@ -131,18 +152,15 @@ public class Main {
                             alert.setTimeStampDateExpires(Long.parseLong(value));
                         }else if(parameter.getElementsByTagName("valueName").item(0).getTextContent().equals("Municipios")){
                             ArrayList<IBGEMunicipio> ibgeMunicipios = new ArrayList<>();
+
                             String municipios = parameter.getElementsByTagName("value").item(0).getTextContent();
-                            // Define uma expressão regular para encontrar os códigos dentro dos parênteses
                             Pattern pattern = Pattern.compile("\\((\\d+)\\)");
-                            // Crie um objeto Matcher para executar a expressão regular na string de municípios
                             Matcher matcher = pattern.matcher(municipios);
-                            // Use o loop para encontrar todos os códigos e imprimir
-                            //System.out.println("Códigos dos municípios:");
+
                             while (matcher.find()) {
                                 Integer codigo = Integer.parseInt(matcher.group(1));
                                 IBGEMunicipio codIBGE = new IBGEMunicipio(codigo);
                                 ibgeMunicipios.add(codIBGE);
-                                System.out.println("MUN "+codigo);
                             }
                             alert.setIbgeMunicipios(ibgeMunicipios);
                         }
@@ -157,10 +175,10 @@ public class Main {
         }
     }
 
-    public static Boolean valendo(Long TimeStampDateOnSet, Long timeStampDateExpires) {
+    public Boolean valendo(Long timeStampDateOnSet, Long timeStampDateExpires) {
         long currentTimestamp = Instant.now().getEpochSecond();
         if(timeStampDateExpires>currentTimestamp){
-            if(TimeStampDateOnSet<currentTimestamp){
+            if(timeStampDateOnSet<currentTimestamp){
                 return true;
             }
         }
