@@ -1,8 +1,8 @@
 package inmet;
 
-import group.chon.inmet.IBGEMunicipio;
-import group.chon.inmet.InmetAlert;
-import group.chon.inmet.InmetRSS;
+import group.chon.pythia.inmet.IBGEMunicipio;
+import group.chon.pythia.inmet.InmetAlert;
+import group.chon.pythia.inmet.InmetRSS;
 import jason.asSemantics.DefaultInternalAction;
 import jason.asSemantics.Message;
 import jason.asSemantics.TransitionSystem;

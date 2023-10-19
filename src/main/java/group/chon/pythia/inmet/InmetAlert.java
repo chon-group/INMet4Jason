@@ -1,4 +1,4 @@
-package group.chon.inmet;
+package group.chon.pythia.inmet;
 
 import java.util.ArrayList;
 

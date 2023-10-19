@@ -1,6 +1,6 @@
 package inmet;
 
-import group.chon.inmet.InmetRSS;
+import group.chon.pythia.inmet.InmetRSS;
 import jason.asSemantics.DefaultInternalAction;
 import jason.asSemantics.TransitionSystem;
 import jason.asSemantics.Unifier;
