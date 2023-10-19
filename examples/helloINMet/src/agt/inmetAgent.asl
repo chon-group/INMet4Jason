@@ -11,19 +11,11 @@ myCity(3303302).                                            // Niteroi-RJ -- Pro
 +!conf
 : inmetAlertAS(URL) 
 & myCity(COD) <- 
-    inmet.clear;
-    inmet.check(URL,COD).
+    pythia.inmet.clear;
+    pythia.inmet.check(URL,COD).
 
 +inmetAlert(AlertID,Event,Serverity,Certainty,Time,ResponseType,Description,Instruction,Link)[source(inmetGovBR)] <-
-    .print("New Alert: ",AlertID);
-    .print("description: ",Description);
-    .print("event : ",Event);
-    .print("serverity: ",Serverity);
-    .print("certainty: ",Certainty);
-    .print("when: ",Time);
-    .print("type: ",ResponseType);
-    .print("what to do: ",Instruction);
-    .print("more info: ",Link).
+    .print("New Alert: ",AlertID," description: ",Description," event : ",Event, "serverity: ",Serverity, "certainty: ",Certainty, "when: ",Time, "type: ",ResponseType," what to do: ",Instruction, "more info: ",Link).
 
 
 /*  inmetAlert(44166,

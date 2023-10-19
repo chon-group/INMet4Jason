@@ -1,4 +1,4 @@
-package inmet;
+package pythia.inmet;
 
 import group.chon.pythia.inmet.InmetRSS;
 import jason.asSemantics.DefaultInternalAction;
