@@ -28,15 +28,6 @@
             <artifactId>httpclient5</artifactId>
             <version>5.2.1</version>
         </dependency>
-
-        <dependency>
-            <groupId>com.github.jason-lang</groupId>
-            <artifactId>jason</artifactId>
-            <version>v3.1</version>
-        </dependency>
-
-
-
     </dependencies>
 
 </project>
