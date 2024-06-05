@@ -36,9 +36,14 @@ import java.time.Instant;
  *
  */
 public class InmetRSS {
-    private Long DEFAULT_TIME_BETWEEN_REQUESTS = 3600000L;
-    private String  DEFAULT_CACHE_DIR = ".inmetGovBR";
-    private String  DEFAULT_XML_ROOT_FILE = "inmetRSS.xml";
+    private final Long DEFAULT_TIME_BETWEEN_REQUESTS = 3600000L;
+
+    private final String  DEFAULT_CACHE_DIR = System.getProperty("user.home")+
+            FileSystems.getDefault().getSeparator() +
+            ".cache"+
+            FileSystems.getDefault().getSeparator() +
+            "inmetGovBR";
+
     private InmetAlertsArray inmetAlertsArray = new InmetAlertsArray();
     private String URL;
     Logger logger = Logger.getLogger(InmetRSS.class.getName());
@@ -51,7 +56,7 @@ public class InmetRSS {
      */
     public InmetRSS(String URL){
         this.URL = URL;
-        this.loadRSS();
+        this.getDataFromRSS();
     }
 
     /**
@@ -62,28 +67,19 @@ public class InmetRSS {
 
     }
 
-    public void setMinutesBetweenRequests(Integer MINUTES) {
-        this.DEFAULT_TIME_BETWEEN_REQUESTS = Integer.toUnsignedLong(MINUTES*60*1000);
-    }
-
-    public void setCACHE_DIR(String DEFAULT_CACHE_DIR) {
-        this.DEFAULT_CACHE_DIR = DEFAULT_CACHE_DIR;
-    }
-
-    public void setDEFAULT_XML_ROOT_FILE(String DEFAULT_XML_ROOT_FILE){
-        this.DEFAULT_XML_ROOT_FILE = DEFAULT_XML_ROOT_FILE;
-    }
-
     public void setURL(String URL) {
         this.URL = URL;
     }
 
-    public void loadRSS(){
-        try {
-            downloadRSS(URL, DEFAULT_XML_ROOT_FILE);
-            readXML(DEFAULT_XML_ROOT_FILE);
-        } catch (IOException e) {
-            logger.severe(e.getMessage());
+    private void createDefaultCacheDIR(){
+        Path diretorioPath = Paths.get(DEFAULT_CACHE_DIR);
+        if (!(Files.exists(diretorioPath) && Files.isDirectory(diretorioPath))) {
+            try {
+                Files.createDirectory(diretorioPath);
+            } catch (IOException e) {
+                logger.severe(e.getMessage());
+                //throw new RuntimeException(e);
+            }
         }
     }
 
@@ -119,8 +115,8 @@ public class InmetRSS {
         }else{
             InmetAlert inmetAlert = inmetAlertsArray.getLastUnperceivedAlert();
             ArrayList<IBGECityID> ibgeMunicipios = inmetAlert.getIbgeMunicipios();
-            for(int j=0; j<ibgeMunicipios.size(); j++){
-                if(ibgeMunicipios.get(j).getIBGE_Id().equals(IBGEId)){
+            for (IBGECityID ibgeMunicipio : ibgeMunicipios) {
+                if (ibgeMunicipio.getIBGE_Id().equals(IBGEId)) {
                     return inmetAlert;
                 }
             }
@@ -128,39 +124,10 @@ public class InmetRSS {
         }
     }
 
-    private void downloadRSS(String url, String outputFilePath) throws IOException {
-        Path diretorioPath = Paths.get(DEFAULT_CACHE_DIR);
-        if (!(Files.exists(diretorioPath) && Files.isDirectory(diretorioPath))) {
-            Files.createDirectory(diretorioPath);
-        }
-
-        if(isFileMoreOldOrNotExists(DEFAULT_CACHE_DIR+FileSystems.getDefault().getSeparator()+outputFilePath)) {
-            logger.info("Downloading... "+outputFilePath);
-            CloseableHttpClient httpClient = HttpClients.createDefault();
-            HttpGet httpGet = new HttpGet(url);
-
-            try (CloseableHttpResponse response = httpClient.execute(httpGet)) {
-                HttpEntity entity = response.getEntity();
-                if (entity != null) {
-                    try (InputStream inputStream = entity.getContent();
-                         OutputStream outputStream = new FileOutputStream(DEFAULT_CACHE_DIR +FileSystems.getDefault().getSeparator()+outputFilePath)) {
-                        byte[] buffer = new byte[1024];
-                        int bytesRead;
-                        while ((bytesRead = inputStream.read(buffer)) != -1) {
-                            outputStream.write(buffer, 0, bytesRead);
-                        }
-                    }
-                }
-            } catch (Exception ex) {
-                logger.severe(ex.getMessage());
-            }
-        }else{
-            logger.info("Loading cached "+outputFilePath);
-        }
-    }
-
-    private void readXML(String xmlFilePath) {
-        xmlFilePath = DEFAULT_CACHE_DIR +FileSystems.getDefault().getSeparator()+xmlFilePath;
+    public void getDataFromRSS() {
+        createDefaultCacheDIR();
+        downloadRSS(this.URL, "inmetRSS.xml");
+        String xmlFilePath = DEFAULT_CACHE_DIR + FileSystems.getDefault().getSeparator() + "inmetRSS.xml";
         try {
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
             DocumentBuilder builder = factory.newDocumentBuilder();
@@ -233,11 +200,6 @@ public class InmetRSS {
                     }
                     inmetAlertsArray.addItem(alert);
                 }
-/*                else{
-                    System.out.print(".");
-                }
-
- */
             }
         } catch (Exception e) {
             logger.severe(e.getMessage());
@@ -278,12 +240,6 @@ public class InmetRSS {
         return false;
     }
 
-    private Boolean isFileMoreOldOrNotExists(String filePath) {
-        File file = new File(filePath);
-        return !file.exists() ||
-                System.currentTimeMillis() - file.lastModified() >= this.DEFAULT_TIME_BETWEEN_REQUESTS;
-    }
-
     /**
      * Clean the cache of alerts previously received.
      *
@@ -306,6 +262,37 @@ public class InmetRSS {
         dir.delete();
     }
 
+
+    private void downloadRSS(String url, String outputFile) {
+        Path ABSOLUTEPATHFILE = Paths.get(DEFAULT_CACHE_DIR + FileSystems.getDefault().getSeparator() + outputFile);
+
+        if(!ABSOLUTEPATHFILE.toFile().exists() ||
+                System.currentTimeMillis() - ABSOLUTEPATHFILE.toFile().lastModified() >= this.DEFAULT_TIME_BETWEEN_REQUESTS){
+            logger.info("Downloading... "+outputFile);
+            CloseableHttpClient httpClient = HttpClients.createDefault();
+            HttpGet httpGet = new HttpGet(url);
+
+            try (CloseableHttpResponse response = httpClient.execute(httpGet)) {
+                HttpEntity entity = response.getEntity();
+                if (entity != null) {
+                    try (InputStream inputStream = entity.getContent();
+                         OutputStream outputStream = new FileOutputStream(ABSOLUTEPATHFILE.toFile())) {
+                        byte[] buffer = new byte[1024];
+                        int bytesRead;
+                        while ((bytesRead = inputStream.read(buffer)) != -1) {
+                            outputStream.write(buffer, 0, bytesRead);
+                        }
+                    }
+                }
+            } catch (Exception ex) {
+                logger.severe(ex.getMessage());
+            }
+        }else{
+            logger.info("Loading cached "+outputFile);
+        }
+    }
+
+    /*
     private Boolean placeMatch(Integer intPlace, ArrayList<IBGECityID> cityList){
         for(int j=0; j<cityList.size(); j++){
             if(cityList.get(j).getIBGE_Id().equals(intPlace)){
@@ -314,6 +301,8 @@ public class InmetRSS {
         }
         return false;
     }
+
+     */
 
 }
 

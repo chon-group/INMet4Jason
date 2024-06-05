@@ -27,7 +27,7 @@ public class Main {
      *
      */
     public static void main(String[] args) {
-        InmetRSS inmetRSS = null;
+        InmetRSS inmetRSS = new InmetRSS();
         InmetAlert inmetAlert;
         Integer city = null;
 
@@ -37,7 +37,8 @@ public class Main {
             System.exit(0);
         }else if(args.length==1){
             city = Integer.parseInt(args[0]);
-            inmetRSS = new InmetRSS(DEFAULT_INMET_RSS);
+            inmetRSS.setURL(DEFAULT_INMET_RSS);
+            inmetRSS.getDataFromRSS();
         }else if(args.length==2){
             city = Integer.parseInt(args[0]);
             inmetRSS = new InmetRSS(args[1]);

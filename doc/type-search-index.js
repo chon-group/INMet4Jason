@@ -1,1 +1,0 @@
-typeSearchIndex = [{"l":"All Classes and Interfaces","u":"allclasses-index.html"},{"p":"group.chon.pythia.inmetGovBR","l":"IBGECityID"},{"p":"group.chon.pythia.inmetGovBR","l":"InmetAlert"},{"p":"group.chon.pythia.inmetGovBR","l":"InmetAlertsArray"},{"p":"group.chon.pythia.inmetGovBR","l":"InmetRSS"},{"p":"group.chon.pythia","l":"Main"}];updateSearchResults();
