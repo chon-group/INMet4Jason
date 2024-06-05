@@ -32,8 +32,9 @@ public class Main {
         Integer city = null;
 
         if(args.length==0){
-            city = 0;
-            inmetRSS = new InmetRSS(DEFAULT_INMET_RSS);
+            System.out.println("Please enter the city ID! \n\t You can consult the city ID at: https://www.ibge.gov.br/explica/codigos-dos-municipios.php");
+            System.out.println("Try again with: \n\t java -jar Pythia.jar [YOUR_CITY_ID]");
+            System.exit(0);
         }else if(args.length==1){
             city = Integer.parseInt(args[0]);
             inmetRSS = new InmetRSS(DEFAULT_INMET_RSS);

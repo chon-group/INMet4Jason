@@ -15,10 +15,12 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.time.Instant;
@@ -34,10 +36,12 @@ import java.time.Instant;
  *
  */
 public class InmetRSS {
+    private Integer DEFAULT_MINUTES_BETWEEN_REQUESTS = 60;
+    private String  DEFAULT_DIR = ".inmetGovBR";
     private InmetAlertsArray inmetAlertsArray = new InmetAlertsArray();
-
-    //private String outputFilePath = "inmetRSS.xml";
     private String url;
+    Logger logger = Logger.getLogger(InmetRSS.class.getName());
+
 
     /**
      *  This class get weather alerts of INMET::AlertAS Service
@@ -57,12 +61,16 @@ public class InmetRSS {
 
     }
 
+    public void setMinutesBetweenRequests(Integer MINUTES) {
+        this.DEFAULT_MINUTES_BETWEEN_REQUESTS = MINUTES;
+    }
+
     private void read(){
         try {
             this.downloadRSS(url, "inmetRSS.xml");
-            this.lerXML("inmetRSS.xml");
+            this.readXML("inmetRSS.xml");
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.severe(e.getMessage());
         }
     }
 
@@ -107,20 +115,14 @@ public class InmetRSS {
         }
     }
 
-//    public Integer getAlertID(){
-//        return 0;
-//    }
-
-
     private void downloadRSS(String url, String outputFilePath) throws IOException {
-        Path diretorioPath = Paths.get(".rss");
-        //outputFilePath = ".rss/"+outputFilePath;
+        Path diretorioPath = Paths.get(DEFAULT_DIR);
         if (!(Files.exists(diretorioPath) && Files.isDirectory(diretorioPath))) {
             Files.createDirectory(diretorioPath);
         }
 
-        if(isFileMoreOldOrNotExists(".rss/"+outputFilePath,5)) {
-            System.out.println("[InmetGovBR] Downloading... "+outputFilePath);
+        if(isFileMoreOldOrNotExists(DEFAULT_DIR+FileSystems.getDefault().getSeparator()+outputFilePath,this.DEFAULT_MINUTES_BETWEEN_REQUESTS)) {
+            logger.info("Downloading... "+outputFilePath);
             CloseableHttpClient httpClient = HttpClients.createDefault();
             HttpGet httpGet = new HttpGet(url);
 
@@ -128,7 +130,7 @@ public class InmetRSS {
                 HttpEntity entity = response.getEntity();
                 if (entity != null) {
                     try (InputStream inputStream = entity.getContent();
-                         OutputStream outputStream = new FileOutputStream(".rss/"+outputFilePath)) {
+                         OutputStream outputStream = new FileOutputStream(DEFAULT_DIR+FileSystems.getDefault().getSeparator()+outputFilePath)) {
                         byte[] buffer = new byte[1024];
                         int bytesRead;
                         while ((bytesRead = inputStream.read(buffer)) != -1) {
@@ -137,13 +139,15 @@ public class InmetRSS {
                     }
                 }
             } catch (Exception ex) {
-                ex.printStackTrace();
+                logger.severe(ex.getMessage());
             }
+        }else{
+            logger.info("Loading cached "+outputFilePath);
         }
     }
 
-    private void lerXML(String xmlFilePath) {
-        xmlFilePath = ".rss/"+xmlFilePath;
+    private void readXML(String xmlFilePath) {
+        xmlFilePath = DEFAULT_DIR+FileSystems.getDefault().getSeparator()+xmlFilePath;
         try {
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
             DocumentBuilder builder = factory.newDocumentBuilder();
@@ -165,7 +169,7 @@ public class InmetRSS {
                             item.getElementsByTagName("title").item(0).getTextContent(),
                             link);
 
-                    String alertPathFile = ".rss/"+alertID+".xml";
+                    String alertPathFile = DEFAULT_DIR+FileSystems.getDefault().getSeparator()+alertID+".xml";
 
                     //Baixando informações do Alerta
                     File file = new File(alertPathFile);
@@ -215,12 +219,15 @@ public class InmetRSS {
                         }
                     }
                     inmetAlertsArray.addItem(alert);
-                }else{
+                }
+/*                else{
                     System.out.print(".");
                 }
+
+ */
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.severe(e.getMessage());
         }
     }
 
