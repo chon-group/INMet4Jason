@@ -37,7 +37,8 @@ import java.time.Instant;
  */
 public class InmetRSS {
     private Integer DEFAULT_MINUTES_BETWEEN_REQUESTS = 60;
-    private String  DEFAULT_DIR = ".inmetGovBR";
+    private String  DEFAULT_CACHE_DIR = ".inmetGovBR";
+    private String  DEFAULT_XML_ROOT_FILE = "inmetRSS.xml";
     private InmetAlertsArray inmetAlertsArray = new InmetAlertsArray();
     private String url;
     Logger logger = Logger.getLogger(InmetRSS.class.getName());
@@ -65,10 +66,17 @@ public class InmetRSS {
         this.DEFAULT_MINUTES_BETWEEN_REQUESTS = MINUTES;
     }
 
+    public void setCACHE_DIR(String DIR) {
+        this.DEFAULT_CACHE_DIR = DIR;
+    }
+    public void setDEFAULT_XML_ROOT_FILE(String ROOT_FILE){
+        this.DEFAULT_XML_ROOT_FILE = ROOT_FILE;
+    }
+
     private void read(){
         try {
-            this.downloadRSS(url, "inmetRSS.xml");
-            this.readXML("inmetRSS.xml");
+            this.downloadRSS(url, DEFAULT_XML_ROOT_FILE);
+            this.readXML(DEFAULT_XML_ROOT_FILE);
         } catch (IOException e) {
             logger.severe(e.getMessage());
         }
@@ -116,12 +124,12 @@ public class InmetRSS {
     }
 
     private void downloadRSS(String url, String outputFilePath) throws IOException {
-        Path diretorioPath = Paths.get(DEFAULT_DIR);
+        Path diretorioPath = Paths.get(DEFAULT_CACHE_DIR);
         if (!(Files.exists(diretorioPath) && Files.isDirectory(diretorioPath))) {
             Files.createDirectory(diretorioPath);
         }
 
-        if(isFileMoreOldOrNotExists(DEFAULT_DIR+FileSystems.getDefault().getSeparator()+outputFilePath,this.DEFAULT_MINUTES_BETWEEN_REQUESTS)) {
+        if(isFileMoreOldOrNotExists(DEFAULT_CACHE_DIR +FileSystems.getDefault().getSeparator()+outputFilePath,this.DEFAULT_MINUTES_BETWEEN_REQUESTS)) {
             logger.info("Downloading... "+outputFilePath);
             CloseableHttpClient httpClient = HttpClients.createDefault();
             HttpGet httpGet = new HttpGet(url);
@@ -130,7 +138,7 @@ public class InmetRSS {
                 HttpEntity entity = response.getEntity();
                 if (entity != null) {
                     try (InputStream inputStream = entity.getContent();
-                         OutputStream outputStream = new FileOutputStream(DEFAULT_DIR+FileSystems.getDefault().getSeparator()+outputFilePath)) {
+                         OutputStream outputStream = new FileOutputStream(DEFAULT_CACHE_DIR +FileSystems.getDefault().getSeparator()+outputFilePath)) {
                         byte[] buffer = new byte[1024];
                         int bytesRead;
                         while ((bytesRead = inputStream.read(buffer)) != -1) {
@@ -147,7 +155,7 @@ public class InmetRSS {
     }
 
     private void readXML(String xmlFilePath) {
-        xmlFilePath = DEFAULT_DIR+FileSystems.getDefault().getSeparator()+xmlFilePath;
+        xmlFilePath = DEFAULT_CACHE_DIR +FileSystems.getDefault().getSeparator()+xmlFilePath;
         try {
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
             DocumentBuilder builder = factory.newDocumentBuilder();
@@ -169,7 +177,7 @@ public class InmetRSS {
                             item.getElementsByTagName("title").item(0).getTextContent(),
                             link);
 
-                    String alertPathFile = DEFAULT_DIR+FileSystems.getDefault().getSeparator()+alertID+".xml";
+                    String alertPathFile = DEFAULT_CACHE_DIR +FileSystems.getDefault().getSeparator()+alertID+".xml";
 
                     //Baixando informações do Alerta
                     File file = new File(alertPathFile);
