@@ -36,22 +36,22 @@ import java.time.Instant;
  *
  */
 public class InmetRSS {
-    private Integer DEFAULT_MINUTES_BETWEEN_REQUESTS = 60;
+    private Long DEFAULT_TIME_BETWEEN_REQUESTS = 3600000L;
     private String  DEFAULT_CACHE_DIR = ".inmetGovBR";
     private String  DEFAULT_XML_ROOT_FILE = "inmetRSS.xml";
     private InmetAlertsArray inmetAlertsArray = new InmetAlertsArray();
-    private String url;
+    private String URL;
     Logger logger = Logger.getLogger(InmetRSS.class.getName());
 
 
     /**
      *  This class get weather alerts of INMET::AlertAS Service
      *
-     * @param rssURL This parameter receives the URL of the INMET::AlertAS Service
+     * @param URL This parameter receives the URL of the INMET::AlertAS Service
      */
-    public InmetRSS(String rssURL){
-        this.url = rssURL;
-        this.read();
+    public InmetRSS(String URL){
+        this.URL = URL;
+        this.loadRSS();
     }
 
     /**
@@ -63,20 +63,25 @@ public class InmetRSS {
     }
 
     public void setMinutesBetweenRequests(Integer MINUTES) {
-        this.DEFAULT_MINUTES_BETWEEN_REQUESTS = MINUTES;
+        this.DEFAULT_TIME_BETWEEN_REQUESTS = Integer.toUnsignedLong(MINUTES*60*1000);
     }
 
-    public void setCACHE_DIR(String DIR) {
-        this.DEFAULT_CACHE_DIR = DIR;
-    }
-    public void setDEFAULT_XML_ROOT_FILE(String ROOT_FILE){
-        this.DEFAULT_XML_ROOT_FILE = ROOT_FILE;
+    public void setCACHE_DIR(String DEFAULT_CACHE_DIR) {
+        this.DEFAULT_CACHE_DIR = DEFAULT_CACHE_DIR;
     }
 
-    private void read(){
+    public void setDEFAULT_XML_ROOT_FILE(String DEFAULT_XML_ROOT_FILE){
+        this.DEFAULT_XML_ROOT_FILE = DEFAULT_XML_ROOT_FILE;
+    }
+
+    public void setURL(String URL) {
+        this.URL = URL;
+    }
+
+    public void loadRSS(){
         try {
-            this.downloadRSS(url, DEFAULT_XML_ROOT_FILE);
-            this.readXML(DEFAULT_XML_ROOT_FILE);
+            downloadRSS(URL, DEFAULT_XML_ROOT_FILE);
+            readXML(DEFAULT_XML_ROOT_FILE);
         } catch (IOException e) {
             logger.severe(e.getMessage());
         }
@@ -129,7 +134,7 @@ public class InmetRSS {
             Files.createDirectory(diretorioPath);
         }
 
-        if(isFileMoreOldOrNotExists(DEFAULT_CACHE_DIR +FileSystems.getDefault().getSeparator()+outputFilePath,this.DEFAULT_MINUTES_BETWEEN_REQUESTS)) {
+        if(isFileMoreOldOrNotExists(DEFAULT_CACHE_DIR+FileSystems.getDefault().getSeparator()+outputFilePath)) {
             logger.info("Downloading... "+outputFilePath);
             CloseableHttpClient httpClient = HttpClients.createDefault();
             HttpGet httpGet = new HttpGet(url);
@@ -273,22 +278,10 @@ public class InmetRSS {
         return false;
     }
 
-   private Boolean isFileMoreOldOrNotExists(String filePath, Integer oldInMinutes) {
-    File file = new File(filePath);
-    if (file.exists()) {
-        long ultimaModificacao = file.lastModified();
-        long tempoAtual = System.currentTimeMillis();
-
-        long diferencaEmMilissegundos = tempoAtual - ultimaModificacao;
-        long cincoMinutosEmMilissegundos = oldInMinutes * 60 * 1000; // 5 minutos em milissegundos
-
-        if (diferencaEmMilissegundos > cincoMinutosEmMilissegundos) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-    return true;
+    private Boolean isFileMoreOldOrNotExists(String filePath) {
+        File file = new File(filePath);
+        return !file.exists() ||
+                System.currentTimeMillis() - file.lastModified() >= this.DEFAULT_TIME_BETWEEN_REQUESTS;
     }
 
     /**
