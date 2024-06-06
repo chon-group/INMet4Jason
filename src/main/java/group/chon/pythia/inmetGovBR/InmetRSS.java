@@ -36,16 +36,61 @@ import java.time.Instant;
  *
  */
 public class InmetRSS {
-    private final Long DEFAULT_TIME_BETWEEN_REQUESTS = 3600000L;
+    private Long DEFAULT_TIME_BETWEEN_REQUESTS = 3600000L; /* 1 hour */
 
-    private final String  DEFAULT_CACHE_DIR = System.getProperty("user.home")+
+    public Long getDEFAULT_TIME_BETWEEN_REQUESTS() {
+        return DEFAULT_TIME_BETWEEN_REQUESTS;
+    }
+
+    public void setDEFAULT_TIME_BETWEEN_REQUESTS(Long DEFAULT_TIME_BETWEEN_REQUESTS) {
+        this.DEFAULT_TIME_BETWEEN_REQUESTS = DEFAULT_TIME_BETWEEN_REQUESTS;
+    }
+
+    public Long getDEFAULT_ALERT_TTL() {
+        return DEFAULT_ALERT_TTL;
+    }
+
+    public void setDEFAULT_ALERT_TTL(Long DEFAULT_ALERT_TTL) {
+        this.DEFAULT_ALERT_TTL = DEFAULT_ALERT_TTL;
+    }
+
+    public String getDEFAULT_INMET_RSS() {
+        return DEFAULT_INMET_RSS;
+    }
+
+    public void setDEFAULT_INMET_RSS(String DEFAULT_INMET_RSS) {
+        this.DEFAULT_INMET_RSS = DEFAULT_INMET_RSS;
+    }
+
+    public String getDEFAULT_CACHE_DIR() {
+        return DEFAULT_CACHE_DIR;
+    }
+
+    public void setDEFAULT_CACHE_DIR(String DEFAULT_CACHE_DIR) {
+        this.DEFAULT_CACHE_DIR = DEFAULT_CACHE_DIR;
+    }
+
+    public String getDEFAULT_ROOT_FILE() {
+        return DEFAULT_ROOT_FILE;
+    }
+
+    public void setDEFAULT_ROOT_FILE(String DEFAULT_ROOT_FILE) {
+        this.DEFAULT_ROOT_FILE = DEFAULT_ROOT_FILE;
+    }
+
+    private Long DEFAULT_ALERT_TTL = 86400000L;   /* 1 day */
+
+    private String DEFAULT_INMET_RSS = "https://apiprevmet3.inmet.gov.br/avisos/rss";
+
+    private String  DEFAULT_CACHE_DIR = System.getProperty("user.home")+
             FileSystems.getDefault().getSeparator() +
             ".cache"+
             FileSystems.getDefault().getSeparator() +
             "inmetGovBR";
 
+    private String  DEFAULT_ROOT_FILE = "inmetRSS.xml";
+
     private InmetAlertsArray inmetAlertsArray = new InmetAlertsArray();
-    private String URL;
     Logger logger = Logger.getLogger(InmetRSS.class.getName());
 
 
@@ -55,7 +100,7 @@ public class InmetRSS {
      * @param URL This parameter receives the URL of the INMET::AlertAS Service
      */
     public InmetRSS(String URL){
-        this.URL = URL;
+        this.DEFAULT_INMET_RSS = URL;
         this.getDataFromRSS();
     }
 
@@ -68,19 +113,7 @@ public class InmetRSS {
     }
 
     public void setURL(String URL) {
-        this.URL = URL;
-    }
-
-    private void createDefaultCacheDIR(){
-        Path diretorioPath = Paths.get(DEFAULT_CACHE_DIR);
-        if (!(Files.exists(diretorioPath) && Files.isDirectory(diretorioPath))) {
-            try {
-                Files.createDirectory(diretorioPath);
-            } catch (IOException e) {
-                logger.severe(e.getMessage());
-                //throw new RuntimeException(e);
-            }
-        }
+        this.DEFAULT_INMET_RSS = URL;
     }
 
     /**
@@ -125,15 +158,14 @@ public class InmetRSS {
     }
 
     public void getDataFromRSS() {
-        createDefaultCacheDIR();
-        downloadRSS(this.URL, "inmetRSS.xml");
-        String xmlFilePath = DEFAULT_CACHE_DIR + FileSystems.getDefault().getSeparator() + "inmetRSS.xml";
+        createCACHE_DIRifNotExists();
+        downloadRSS(this.DEFAULT_INMET_RSS);
         try {
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
             DocumentBuilder builder = factory.newDocumentBuilder();
-            Document doc = builder.parse(new File(xmlFilePath));
+            Document doc = builder.parse(new File(DEFAULT_CACHE_DIR + FileSystems.getDefault().getSeparator() + DEFAULT_ROOT_FILE));
 
-            // Obtendo a lista de elementos <item>
+            // Obtendo a lista de elementos
             NodeList itemList = doc.getElementsByTagName("item");
             for (int i = 0; i < itemList.getLength(); i++) {
                 Element item = (Element) itemList.item(i);
@@ -148,17 +180,10 @@ public class InmetRSS {
                     InmetAlert alert = new InmetAlert(alertID,
                             item.getElementsByTagName("title").item(0).getTextContent(),
                             link);
-
-                    String alertPathFile = DEFAULT_CACHE_DIR +FileSystems.getDefault().getSeparator()+alertID+".xml";
-
-                    //Baixando informações do Alerta
-                    File file = new File(alertPathFile);
-                    if (!file.exists()) {
-                        downloadRSS(link,alertID+".xml");
-                    }
+                    downloadAlert(link,alertID);
                     DocumentBuilderFactory alertFactory = DocumentBuilderFactory.newInstance();
                     DocumentBuilder alertBuilder = alertFactory.newDocumentBuilder();
-                    Document alertDoc = alertBuilder.parse(new File(alertPathFile));
+                    Document alertDoc = alertBuilder.parse(new File(DEFAULT_CACHE_DIR +FileSystems.getDefault().getSeparator()+alertID+".xml"));
                     Element info = (Element) alertDoc.getElementsByTagName("info").item(0);
 
                     alert.setCategory(info.getElementsByTagName("category").item(0).getTextContent());
@@ -243,66 +268,83 @@ public class InmetRSS {
     /**
      * Clean the cache of alerts previously received.
      *
-     * @param strOpt Receive the cache alert directory path.
+     * @param file Receive the cache alert directory path.
      */
-    public void cleanCache(String strOpt){
-        File diretorio = new File(strOpt);
-        delDirRecursively(diretorio);
+    public void cleanCache(String file){
+        File absoluteFilePath = new File(DEFAULT_CACHE_DIR+FileSystems.getDefault().getSeparator()+file);
+        delDirRecursively(absoluteFilePath);
     }
 
-    private void delDirRecursively(File dir) {
-        if (dir.isDirectory()){
-            File[] content = dir.listFiles();
+    public void cleanCache(){
+        File dirPath = new File(DEFAULT_CACHE_DIR);
+        delDirRecursively(dirPath);
+    }
+
+    private void delDirRecursively(File dirORfilePath) {
+        if (dirORfilePath.isDirectory()){
+            File[] content = dirORfilePath.listFiles();
             if (content != null) {
-                for (File file : content) {
-                    delDirRecursively(file);
+                for (File fileInside : content) {
+                    delDirRecursively(fileInside);
                 }
             }
         }
-        dir.delete();
+        dirORfilePath.delete();
     }
 
+    private void downloadAlert(String URL, Integer alertNumber){
+        Path alertFile = Paths.get(DEFAULT_CACHE_DIR + FileSystems.getDefault().getSeparator() + alertNumber + ".xml");
+        if(!alertFile.toFile().exists() ||
+                System.currentTimeMillis() - alertFile.toFile().lastModified() >= this.DEFAULT_ALERT_TTL){
+            download(URL, String.valueOf(alertNumber)+".xml");
+        }else{
+            logger.fine("Loading cached alert "+String.valueOf(alertNumber));
+        }
+    }
 
-    private void downloadRSS(String url, String outputFile) {
-        Path ABSOLUTEPATHFILE = Paths.get(DEFAULT_CACHE_DIR + FileSystems.getDefault().getSeparator() + outputFile);
+    private void downloadRSS(String URL){
+        Path rssRootFile = Paths.get(DEFAULT_CACHE_DIR + FileSystems.getDefault().getSeparator() + DEFAULT_ROOT_FILE);
+        if(!rssRootFile.toFile().exists() ||
+                System.currentTimeMillis() - rssRootFile.toFile().lastModified() >= this.DEFAULT_TIME_BETWEEN_REQUESTS){
+            download(URL,DEFAULT_ROOT_FILE);
+        }else{
+            logger.info("Loading cached INMET::Alert-AS data");
+        }
+    }
 
-        if(!ABSOLUTEPATHFILE.toFile().exists() ||
-                System.currentTimeMillis() - ABSOLUTEPATHFILE.toFile().lastModified() >= this.DEFAULT_TIME_BETWEEN_REQUESTS){
-            logger.info("Downloading... "+outputFile);
-            CloseableHttpClient httpClient = HttpClients.createDefault();
-            HttpGet httpGet = new HttpGet(url);
-
-            try (CloseableHttpResponse response = httpClient.execute(httpGet)) {
-                HttpEntity entity = response.getEntity();
-                if (entity != null) {
-                    try (InputStream inputStream = entity.getContent();
-                         OutputStream outputStream = new FileOutputStream(ABSOLUTEPATHFILE.toFile())) {
-                        byte[] buffer = new byte[1024];
-                        int bytesRead;
-                        while ((bytesRead = inputStream.read(buffer)) != -1) {
-                            outputStream.write(buffer, 0, bytesRead);
-                        }
+    private void download(String url, String outputFile) {
+        logger.info("Downloading... "+outputFile);
+        CloseableHttpClient httpClient = HttpClients.createDefault();
+        HttpGet httpGet = new HttpGet(url);
+        try (CloseableHttpResponse response = httpClient.execute(httpGet)) {
+            HttpEntity entity = response.getEntity();
+            if (entity != null) {
+                try (InputStream inputStream = entity.getContent();
+                     OutputStream outputStream = new FileOutputStream(DEFAULT_CACHE_DIR +
+                             FileSystems.getDefault().getSeparator()
+                             +outputFile)) {
+                    byte[] buffer = new byte[1024];
+                    int bytesRead;
+                    while ((bytesRead = inputStream.read(buffer)) != -1) {
+                        outputStream.write(buffer, 0, bytesRead);
                     }
                 }
-            } catch (Exception ex) {
-                logger.severe(ex.getMessage());
             }
-        }else{
-            logger.info("Loading cached "+outputFile);
+        } catch (Exception ex) {
+            logger.severe(ex.getMessage());
         }
     }
 
-    /*
-    private Boolean placeMatch(Integer intPlace, ArrayList<IBGECityID> cityList){
-        for(int j=0; j<cityList.size(); j++){
-            if(cityList.get(j).getIBGE_Id().equals(intPlace)){
-                return true;
+    private void createCACHE_DIRifNotExists(){
+        Path diretorioPath = Paths.get(DEFAULT_CACHE_DIR);
+        if (!(Files.exists(diretorioPath) && Files.isDirectory(diretorioPath))) {
+            try {
+                Files.createDirectory(diretorioPath);
+            } catch (IOException e) {
+                logger.severe(e.getMessage());
             }
         }
-        return false;
     }
-
-     */
 
 }
 
