@@ -6,6 +6,8 @@
 |:-:|
 |Pythia is a middleware that integrates Java applications with the [INMET::AlertAS](https://alertas2.inmet.gov.br/) Service that issues alerts based on weather and climate monitoring, analysis, and forecasting provided by INMET (National Institute of Meteorology), an agency of the Ministry of Agriculture, Livestock and Food Supply.|
 
+### Using in a terminal
+![image](https://github.com/chon-group/Pythia/assets/32855001/eda8497c-b9e0-4e4f-87cc-a44ad30b4816)
 
 
 ## How to import?
