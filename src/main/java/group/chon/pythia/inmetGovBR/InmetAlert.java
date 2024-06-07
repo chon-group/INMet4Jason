@@ -25,7 +25,7 @@ public class InmetAlert {
     private String colorRisk;
     private Long timeStampDateOnSet;
     private Long timeStampDateExpires;
-    private ArrayList<IBGECityID> ibgeMunicipios = new ArrayList<>();
+    private ArrayList<InmetAlertIBGECityID> ibgeMunicipios = new ArrayList<>();
 
     /**
      * An alert of INMET::AlertAS service
@@ -327,7 +327,7 @@ public class InmetAlert {
      *
      * @return the list of [Municipios] from the alert
      */
-    public ArrayList<IBGECityID> getIbgeMunicipios() {
+    public ArrayList<InmetAlertIBGECityID> getIbgeMunicipios() {
         return ibgeMunicipios;
     }
 
@@ -337,7 +337,7 @@ public class InmetAlert {
      * @param ibgeMunicipios the list of [Municipios] from RSS alert file
      *
      */
-    public void setIbgeMunicipios(ArrayList<IBGECityID> ibgeMunicipios) {
+    public void setIbgeMunicipios(ArrayList<InmetAlertIBGECityID> ibgeMunicipios) {
         this.ibgeMunicipios = ibgeMunicipios;
     }
 }

@@ -5,13 +5,13 @@ package group.chon.pythia.inmetGovBR;
  *
  * @author Nilson Lazarin
  */
-public class IBGECityID {
+public class InmetAlertIBGECityID {
     private Integer IBGE_Id;
 
     /**
      * @param IBGEId An Integer of the City's IBGE identification.
      */
-    public IBGECityID(Integer IBGEId){
+    public InmetAlertIBGECityID(Integer IBGEId){
         this.IBGE_Id = IBGEId;
     }
 

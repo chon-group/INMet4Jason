@@ -27,7 +27,7 @@
       <dependency>
         <groupId>com.github.chon-group</groupId>
         <artifactId>Pythia</artifactId>
-        <version>1.0.4</version>
+        <version>1.1.0</version>
       </dependency>
     </dependencies>
     ```
@@ -47,7 +47,7 @@
     }
 
     dependencies {
-      implementation 'com.github.chon-group:Pythia:1.0.4'
+      implementation 'com.github.chon-group:Pythia:1.1.0'
     }
 
     ```

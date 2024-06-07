@@ -23,7 +23,6 @@ import java.util.ArrayList;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.time.Instant;
 
 /**
  * Client of INMET::Alert-AS Service <br>
@@ -37,62 +36,24 @@ import java.time.Instant;
  */
 public class InmetRSS {
     private Long DEFAULT_TIME_BETWEEN_REQUESTS = 3600000L; /* 1 hour */
-
-    public Long getDEFAULT_TIME_BETWEEN_REQUESTS() {
-        return DEFAULT_TIME_BETWEEN_REQUESTS;
-    }
-
-    public void setDEFAULT_TIME_BETWEEN_REQUESTS(Long DEFAULT_TIME_BETWEEN_REQUESTS) {
-        this.DEFAULT_TIME_BETWEEN_REQUESTS = DEFAULT_TIME_BETWEEN_REQUESTS;
-    }
-
-    public Long getDEFAULT_ALERT_TTL() {
-        return DEFAULT_ALERT_TTL;
-    }
-
-    public void setDEFAULT_ALERT_TTL(Long DEFAULT_ALERT_TTL) {
-        this.DEFAULT_ALERT_TTL = DEFAULT_ALERT_TTL;
-    }
-
-    public String getDEFAULT_INMET_RSS() {
-        return DEFAULT_INMET_RSS;
-    }
-
-    public void setDEFAULT_INMET_RSS(String DEFAULT_INMET_RSS) {
-        this.DEFAULT_INMET_RSS = DEFAULT_INMET_RSS;
-    }
-
-    public String getDEFAULT_CACHE_DIR() {
-        return DEFAULT_CACHE_DIR;
-    }
-
-    public void setDEFAULT_CACHE_DIR(String DEFAULT_CACHE_DIR) {
-        this.DEFAULT_CACHE_DIR = DEFAULT_CACHE_DIR;
-    }
-
-    public String getDEFAULT_ROOT_FILE() {
-        return DEFAULT_ROOT_FILE;
-    }
-
-    public void setDEFAULT_ROOT_FILE(String DEFAULT_ROOT_FILE) {
-        this.DEFAULT_ROOT_FILE = DEFAULT_ROOT_FILE;
-    }
-
     private Long DEFAULT_ALERT_TTL = 86400000L;   /* 1 day */
-
-    private String DEFAULT_INMET_RSS = "https://apiprevmet3.inmet.gov.br/avisos/rss";
-
+    private String  DEFAULT_INMET_RSS = "https://apiprevmet3.inmet.gov.br/avisos/rss";
+    private String  DEFAULT_ROOT_FILE = "inmetRSS.xml";
     private String  DEFAULT_CACHE_DIR = System.getProperty("user.home")+
             FileSystems.getDefault().getSeparator() +
             ".cache"+
             FileSystems.getDefault().getSeparator() +
             "inmetGovBR";
-
-    private String  DEFAULT_ROOT_FILE = "inmetRSS.xml";
-
     private InmetAlertsArray inmetAlertsArray = new InmetAlertsArray();
     Logger logger = Logger.getLogger(InmetRSS.class.getName());
 
+    /**
+     * This class get weather alerts of INMET::AlertAS Service
+     *
+     */
+    public InmetRSS(){
+        //getDataFromRSS();
+    }
 
     /**
      *  This class get weather alerts of INMET::AlertAS Service
@@ -100,20 +61,48 @@ public class InmetRSS {
      * @param URL This parameter receives the URL of the INMET::AlertAS Service
      */
     public InmetRSS(String URL){
-        this.DEFAULT_INMET_RSS = URL;
-        this.getDataFromRSS();
+        setDEFAULT_INMET_RSS(URL);
+        getDataFromRSS();
     }
 
-    /**
-     * This class get weather alerts of INMET::AlertAS Service
-     *
-     */
-    public InmetRSS(){
-
+    public Long getDEFAULT_TIME_BETWEEN_REQUESTS() {
+        return this.DEFAULT_TIME_BETWEEN_REQUESTS;
     }
 
-    public void setURL(String URL) {
-        this.DEFAULT_INMET_RSS = URL;
+    public void setDEFAULT_TIME_BETWEEN_REQUESTS(Long DEFAULT_TIME_BETWEEN_REQUESTS) {
+        this.DEFAULT_TIME_BETWEEN_REQUESTS = DEFAULT_TIME_BETWEEN_REQUESTS;
+    }
+
+    public Long getDEFAULT_ALERT_TTL() {
+        return this.DEFAULT_ALERT_TTL;
+    }
+
+    public void setDEFAULT_ALERT_TTL(Long DEFAULT_ALERT_TTL) {
+        this.DEFAULT_ALERT_TTL = DEFAULT_ALERT_TTL;
+    }
+
+    public String getDEFAULT_INMET_RSS() {
+        return this.DEFAULT_INMET_RSS;
+    }
+
+    public void setDEFAULT_INMET_RSS(String DEFAULT_INMET_RSS) {
+        this.DEFAULT_INMET_RSS = DEFAULT_INMET_RSS;
+    }
+
+    public String getDEFAULT_CACHE_DIR() {
+        return this.DEFAULT_CACHE_DIR;
+    }
+
+    public void setDEFAULT_CACHE_DIR(String DEFAULT_CACHE_DIR) {
+        this.DEFAULT_CACHE_DIR = DEFAULT_CACHE_DIR;
+    }
+
+    public String getDEFAULT_ROOT_FILE() {
+        return this.DEFAULT_ROOT_FILE;
+    }
+
+    public void setDEFAULT_ROOT_FILE(String DEFAULT_ROOT_FILE) {
+        this.DEFAULT_ROOT_FILE = DEFAULT_ROOT_FILE;
     }
 
     /**
@@ -121,7 +110,7 @@ public class InmetRSS {
      *
      * @return TRUE if exists a new alert
      */
-    public Boolean getHasNewItem(){
+    public Boolean hasAlert(){
         return inmetAlertsArray.getHasNewItem();
     }
 
@@ -147,8 +136,8 @@ public class InmetRSS {
             return getLastUnperceivedAlert();
         }else{
             InmetAlert inmetAlert = inmetAlertsArray.getLastUnperceivedAlert();
-            ArrayList<IBGECityID> ibgeMunicipios = inmetAlert.getIbgeMunicipios();
-            for (IBGECityID ibgeMunicipio : ibgeMunicipios) {
+            ArrayList<InmetAlertIBGECityID> ibgeMunicipios = inmetAlert.getIbgeMunicipios();
+            for (InmetAlertIBGECityID ibgeMunicipio : ibgeMunicipios) {
                 if (ibgeMunicipio.getIBGE_Id().equals(IBGEId)) {
                     return inmetAlert;
                 }
@@ -209,7 +198,7 @@ public class InmetRSS {
                         }else if(valueName.equals("TimeStampDateExpires")){
                             alert.setTimeStampDateExpires(Long.parseLong(value));
                         }else if(parameter.getElementsByTagName("valueName").item(0).getTextContent().equals("Municipios")){
-                            ArrayList<IBGECityID> ibgeMunicipios = new ArrayList<>();
+                            ArrayList<InmetAlertIBGECityID> ibgeMunicipios = new ArrayList<>();
 
                             String municipios = parameter.getElementsByTagName("value").item(0).getTextContent();
                             Pattern pattern = Pattern.compile("\\((\\d+)\\)");
@@ -217,7 +206,7 @@ public class InmetRSS {
 
                             while (matcher.find()) {
                                 Integer codigo = Integer.parseInt(matcher.group(1));
-                                IBGECityID codIBGE = new IBGECityID(codigo);
+                                InmetAlertIBGECityID codIBGE = new InmetAlertIBGECityID(codigo);
                                 ibgeMunicipios.add(codIBGE);
                             }
                             alert.setIbgeMunicipios(ibgeMunicipios);
@@ -231,65 +220,15 @@ public class InmetRSS {
         }
     }
 
-    /**
-     * Checks the temporality of an issued alert and returns true if the alert is for the current time.
-     *
-     * @param timeStampDateOnSet Receives the initial timestamp of temporality period.
-     * @param timeStampDateExpires Receives the final timestamp of temporality period.
-     * @return <b>TRUE</b> if the alert is for the current time.
-     */
-    public Boolean isRightNow(Long timeStampDateOnSet, Long timeStampDateExpires) {
-        long currentTimestamp = Instant.now().getEpochSecond();
-        if(timeStampDateExpires>currentTimestamp){
-            if(timeStampDateOnSet<currentTimestamp){
-                return true;
-            }
-        }
-        return false;
+
+    public void clearRSSFile(){
+        File absoluteFilePath = new File(DEFAULT_CACHE_DIR+FileSystems.getDefault().getSeparator()+this.DEFAULT_ROOT_FILE);
+        delCACHE_DIRrecursively(absoluteFilePath);
     }
 
-    /**
-     * Checks the temporality of an issued alert and returns true if the alert is for the current time.
-     *
-     * @param timeStampDateOnSet Receives the initial timestamp of temporality period.
-     * @param timeStampDateExpires Receives the final timestamp of temporality period.
-     * @return <b>TRUE</b> if the alert is for the future.
-     */
-    public Boolean isFuture(Long timeStampDateOnSet, Long timeStampDateExpires) {
-        long currentTimestamp = Instant.now().getEpochSecond();
-        if(timeStampDateExpires>currentTimestamp){
-            if(timeStampDateOnSet>currentTimestamp){
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * Clean the cache of alerts previously received.
-     *
-     * @param file Receive the cache alert directory path.
-     */
-    public void cleanCache(String file){
-        File absoluteFilePath = new File(DEFAULT_CACHE_DIR+FileSystems.getDefault().getSeparator()+file);
-        delDirRecursively(absoluteFilePath);
-    }
-
-    public void cleanCache(){
+    public void clearCACHE_DIR(){
         File dirPath = new File(DEFAULT_CACHE_DIR);
-        delDirRecursively(dirPath);
-    }
-
-    private void delDirRecursively(File dirORfilePath) {
-        if (dirORfilePath.isDirectory()){
-            File[] content = dirORfilePath.listFiles();
-            if (content != null) {
-                for (File fileInside : content) {
-                    delDirRecursively(fileInside);
-                }
-            }
-        }
-        dirORfilePath.delete();
+        delCACHE_DIRrecursively(dirPath);
     }
 
     private void downloadAlert(String URL, Integer alertNumber){
@@ -344,6 +283,18 @@ public class InmetRSS {
                 logger.severe(e.getMessage());
             }
         }
+    }
+
+    private void delCACHE_DIRrecursively(File dirORfilePath) {
+        if (dirORfilePath.isDirectory()){
+            File[] content = dirORfilePath.listFiles();
+            if (content != null) {
+                for (File fileInside : content) {
+                    delCACHE_DIRrecursively(fileInside);
+                }
+            }
+        }
+        dirORfilePath.delete();
     }
 
 }

@@ -1,10 +1,8 @@
 package group.chon.pythia;
 
-import group.chon.pythia.inmetGovBR.IBGECityID;
+import group.chon.pythia.ibgeGovBR.IBGEdtb;
 import group.chon.pythia.inmetGovBR.InmetAlert;
 import group.chon.pythia.inmetGovBR.InmetRSS;
-
-import java.util.ArrayList;
 
 /**
  * Pythia Middleware API
@@ -12,8 +10,6 @@ import java.util.ArrayList;
  * @author Nilson Lazarin
  */
 public class Main {
-    private static final String DEFAULT_INMET_RSS = "https://apiprevmet3.inmet.gov.br/avisos/rss";
-
     /**
      * @param args
      * &emsp; [CityIBGE] <br>
@@ -27,31 +23,33 @@ public class Main {
      *
      */
     public static void main(String[] args) {
-        InmetRSS inmetRSS = new InmetRSS();
+        InmetRSS inmetRSS;
         InmetAlert inmetAlert;
-        Integer city = null;
+        IBGEdtb ibgEdtb = new IBGEdtb();
 
-        if(args.length==0){
-            System.out.println("Please enter the city ID! \n\t You can consult the city ID at: https://www.ibge.gov.br/explica/codigos-dos-municipios.php");
-            System.out.println("Try again with: \n\t java -jar Pythia.jar [YOUR_CITY_ID]");
-            System.exit(0);
-        }else if(args.length==1){
-            city = Integer.parseInt(args[0]);
-            inmetRSS.setURL(DEFAULT_INMET_RSS);
-            inmetRSS.getDataFromRSS();
-        }else if(args.length==2){
-            city = Integer.parseInt(args[0]);
-            inmetRSS = new InmetRSS(args[1]);
-        }
+        try{
+            if(args.length==2){
+                Integer city = ibgEdtb.getIBGECod(args[1],args[0]);
+                System.out.println("IBGECitycod: "+city);
+                inmetRSS = new InmetRSS();
+                //inmetRSS.setDEFAULT_INMET_RSS("http://apiprevmet3.inmet.gov.br/avisos/rss"); /* URL Service */
+                //inmetRSS.setDEFAULT_ALERT_TTL(28800000L);               /* 8 hours      */
+                //inmetRSS.setDEFAULT_TIME_BETWEEN_REQUESTS(360000L);     /* 10 minutes   */
+                inmetRSS.getDataFromRSS();
 
-        if(inmetRSS!=null){
-            while(inmetRSS.getHasNewItem()){
-                inmetAlert = inmetRSS.getLastUnperceivedAlert(city);
-                if(inmetAlert != null){
-                    System.out.print(inmetAlert.getId()+" ");
-                    System.out.println(inmetAlert.getDescription());
+                while(inmetRSS.hasAlert()){
+                    inmetAlert = inmetRSS.getLastUnperceivedAlert(city);
+                    if(inmetAlert != null){
+                        System.out.print(inmetAlert.getId()+" ");
+                        System.out.println(inmetAlert.getDescription());
+                    }
                 }
+            }else{
+                throw new Exception();
             }
+        }catch (Exception ex){
+            System.out.println("Try again with: \n\t java -jar Pythia.jar [CITY] [UF] \n EXAMPLE: \n\t java -jar Pythia.jar \"Nova Friburgo\" RJ\n");
+            System.exit(0);
         }
     }
 
